@@ -1,7 +1,7 @@
 """
 Módulo: Base de Datos SQLite
 Crédito Terra - Banco Guayaquil
-v3: fix duplicados, soporte re-evaluación, exportación portafolio
+Gestión del portafolio: registros, re-evaluación, consultas
 """
 
 import sqlite3

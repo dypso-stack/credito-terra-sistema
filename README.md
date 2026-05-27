@@ -1,6 +1,6 @@
-# Sistema de Evaluación Automatizada — Crédito Terra v3
-**Banco Guayaquil | Área de Sostenibilidad**
-**Proyecto Integrador — Maestría en Inteligencia Artificial Aplicada | UIDE 2026**
+# Sistema de Evaluación Automatizada — Crédito Terra
+**Banco Guayaquil - Sostenibilidad**
+**Proyecto Integrador de Sistema de IA Aplicada para Análisis Predictivo**
 
 ---
 
@@ -115,22 +115,7 @@ python src/modelo_estimacion.py
 
 ---
 
-## Alineación curricular
-
-| Módulo | Aplicación |
-|---|---|
-| Python Essentials 1 y 2 | Toda la lógica del sistema |
-| pandas / Ciencia de Datos | Análisis del portafolio |
-| Machine Learning / Clasificación | Random Forest — elegibilidad y estimación |
-| SQL Intro + Advanced | SQLite — portafolio, historial, consultas |
-| IA Aplicada | Motor de reglas expertas + sistema experto |
-| GitHub | Control de versiones |
-
----
-
 ## Destino cubierto
-- ✅ Energía Solar Fotovoltaica (04 ER.1) — Ficha FLI CT-001
-- 🔜 Escalable a los otros 5 destinos Terra
+- Energía Solar Fotovoltaica (04 ER.1) — Ficha FLI CT-001
 
 ---
-*Banco Guayaquil | UIDE 2026*

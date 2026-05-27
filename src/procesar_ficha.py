@@ -1,5 +1,5 @@
 """
-Script operativo principal — Crédito Terra v3
+Script operativo principal — Crédito Terra
 Banco Guayaquil - Sostenibilidad
 
 Uso:
