@@ -53,9 +53,12 @@ def agregar_parrafo(doc, texto, negrita=False, color=None, tamanio=10):
 
 def agregar_tabla_datos(doc, datos: list, encabezados: list):
     """
-    Agrega una tabla con encabezados y datos.
+    Agrega una tabla con encabezados y datos con sombreado corporativo.
     datos: lista de listas [[fila1col1, fila1col2], ...]
     """
+    from docx.oxml import parse_xml
+    from docx.oxml.ns import nsdecls
+
     tabla = doc.add_table(rows=1, cols=len(encabezados))
     tabla.style = 'Table Grid'
 
@@ -64,8 +67,13 @@ def agregar_tabla_datos(doc, datos: list, encabezados: list):
     for i, enc in enumerate(encabezados):
         fila_enc[i].text = enc
         fila_enc[i].paragraphs[0].runs[0].bold = True
+        # Texto en blanco
         fila_enc[i].paragraphs[0].runs[0].font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
         fila_enc[i].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        
+        # --- SOLUCIÓN: Agrega fondo Magenta corporativo a la celda ---
+        shading_elm = parse_xml(f'<w:shd {nsdecls("w")} w:fill="D4007A"/>')
+        fila_enc[i]._tc.get_or_add_tcPr().append(shading_elm)
 
     # Datos
     for fila in datos:
@@ -207,6 +215,7 @@ def generar_informe_word(caso: dict, dictamen: dict, ruta_salida: str) -> str:
     ind = dictamen.get('indicadores', {})
     tabla_ind = agregar_tabla_datos(
         doc,
+        encabezados=["Indicador", "Valor"],
         datos=[
             ["Energía renovable producida", f"{ind.get('energia_producida_mwh_anio', 0)} MWh/año"],
             ["Capacidad instalada", f"{ind.get('capacidad_kwp', 0)} kWp"],
@@ -215,8 +224,7 @@ def generar_informe_word(caso: dict, dictamen: dict, ruta_salida: str) -> str:
             ["GEI evitadas por año", f"{ind.get('gei_evitadas_anual_tco2', 0)} tCO₂/año"],
             ["GEI evitadas totales (vida útil)", f"{ind.get('gei_evitadas_total_tco2', 0)} tCO₂"],
             ["Vida útil del sistema", f"{ind.get('vida_util_anios', 0)} años"],
-        ],
-        encabezados=["Indicador", "Valor"]
+        ]
     )
 
     doc.add_paragraph()
