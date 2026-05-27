@@ -115,7 +115,7 @@ def generar_informe_word(caso: dict, dictamen: dict, ruta_salida: str) -> str:
 
     p2 = doc.add_paragraph()
     p2.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run2 = p2.add_run("Área de Sostenibilidad")
+    run2 = p2.add_run("- Sostenibilidad")
     run2.font.size = Pt(11)
     run2.font.color.rgb = COLOR_OSCURO
 

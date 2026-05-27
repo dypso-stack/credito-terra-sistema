@@ -32,7 +32,7 @@ OUTPUTS_PATH = "data/outputs"
 def procesar_ficha(ruta_ficha: str, forzar_reevaluacion: bool = False) -> dict:
     print(f"\n{'='*60}")
     print(f"SISTEMA DE EVALUACIÓN — CRÉDITO TERRA")
-    print(f"Banco Guayaquil | Área de Sostenibilidad")
+    print(f"Banco Guayaquil - Área de Sostenibilidad")
     print(f"{'='*60}\n")
 
     # Paso 1: Leer ficha
