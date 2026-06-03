@@ -81,8 +81,8 @@ MAPA_CELDAS = {
     'no_es_credito_consumo':                ('FLI CT-001', 'H74'),
 
     # Sección 8 - Resumen
-    'observaciones':    ('FLI CT-001', 'C90'),
-    'proximos_pasos':   ('FLI CT-001', 'C91'),
+    'observaciones':            ('FLI CT-001', 'D90'),
+    'proximos_pasos':           ('FLI CT-001', 'D91'),
 }
 
 CAMPOS_ELEGIBILIDAD = [
@@ -119,6 +119,34 @@ def convertir_booleano(valor) -> bool:
     return False
 
 
+def convertir_numero(valor):
+    """Convierte valores numéricos de la ficha, manejando coma decimal y texto."""
+    if valor is None:
+        return None
+    if isinstance(valor, (int, float)):
+        return valor
+    if isinstance(valor, str):
+        v = valor.strip().replace(' ', '')
+        if v == '':
+            return None
+        if ',' in v:  # coma decimal europea: "9,2" -> 9.2 ; "1.234,56" -> 1234.56
+            v = v.replace('.', '').replace(',', '.')
+        try:
+            return float(v)
+        except ValueError:
+            return valor  # no era numérico; se conserva el original
+    return valor
+
+
+CAMPOS_NUMERICOS = {
+    'monto_credito_usd', 'capacidad_instalada_mwp', 'energia_producida_mwh_anio',
+    'consumo_cliente_mwh_anio', 'cobertura_energetica_pct', 'vida_util_anios',
+    'factor_emision_sni', 'gei_evitadas_anual_tco2', 'gei_evitadas_total_tco2',
+    'capex_usd', 'monto_credito_usd_s5', 'aporte_propio_usd',
+    'tarifa_electrica_usd_kwh', 'ahorro_anual_usd', 'payback_anios',
+}
+
+
 def leer_ficha_excel(ruta_ficha: str) -> dict:
     """
     Lee una ficha FLI CT-001 completada y extrae todos los campos.
@@ -147,9 +175,11 @@ def leer_ficha_excel(ruta_ficha: str) -> dict:
         valor = leer_celda(ws, celda)
         if campo in CAMPOS_ELEGIBILIDAD:
             caso[campo] = convertir_booleano(valor)
+        elif campo in CAMPOS_NUMERICOS:
+            caso[campo] = convertir_numero(valor)
         else:
             caso[campo] = valor
-        if valor is None and campo not in CAMPOS_ELEGIBILIDAD:
+        if caso[campo] is None and campo not in CAMPOS_ELEGIBILIDAD:
             campos_vacios.append(campo)
 
     wb.close()

@@ -72,8 +72,15 @@ class MotorElegibilidad:
         Independiente de las fórmulas del Excel.
         """
         def to_float(val):
+            if val is None:
+                return 0
+            if isinstance(val, str):
+                v = val.strip().replace(' ', '')
+                if ',' in v:  # coma decimal: "9,2" -> 9.2
+                    v = v.replace('.', '').replace(',', '.')
+                val = v
             try:
-                return float(val) if val is not None else 0
+                return float(val)
             except (ValueError, TypeError):
                 return 0
 
