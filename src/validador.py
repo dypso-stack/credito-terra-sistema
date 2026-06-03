@@ -1,5 +1,5 @@
 """
-Módulo 1: Ingesta y validación de la ficha
+Módulo: Validación de la ficha FLI CT-001
 Crédito Terra - Banco Guayaquil
 Lee la ficha FLI CT-001, valida campos y detecta inconsistencias.
 """

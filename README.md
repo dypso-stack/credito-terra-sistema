@@ -56,7 +56,7 @@ credito_terra/
 # Procesar una ficha nueva
 python src/procesar_ficha.py data/simulated/fichas/CT-0001_Empresa_1.xlsx
 
-# Re-evaluar un caso existente
+# Reevaluar un caso existente
 python src/procesar_ficha.py data/simulated/fichas/CT-0001_Empresa_1.xlsx --reevaluar
 ```
 
@@ -105,11 +105,11 @@ El modelo de estimación es una **demostración metodológica** entrenada con da
 
 **Umbrales de operación** (Riley et al., 2019. *Statistics in Medicine*, 38(7), 1276–1296):
 - Primer entrenamiento real: ≥200 casos evaluados en producción
-- Re-entrenamiento: cada 150 casos nuevos **o** cuando precisión < 80%
+- Reentrenamiento: cada 150 casos nuevos **o** cuando precisión < 80%
 - Validación humana requerida antes de activar cada nueva versión
 
 ```bash
-# Re-entrenar el modelo cuando haya suficientes datos reales
+# Reentrenar el modelo cuando haya suficientes datos reales
 python src/modelo_estimacion.py
 ```
 

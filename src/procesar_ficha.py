@@ -6,7 +6,7 @@ Uso:
     # Procesar una ficha nueva
     python src/procesar_ficha.py data/simulated/fichas/CT-0001_Empresa_1.xlsx
 
-    # Re-evaluar un caso existente
+    # Reevaluar un caso existente
     python src/procesar_ficha.py data/simulated/fichas/CT-0001_Empresa_1.xlsx --reevaluar
 
     # Procesar carpeta completa (solo fichas nuevas)
@@ -32,7 +32,7 @@ OUTPUTS_PATH = "data/outputs"
 def procesar_ficha(ruta_ficha: str, forzar_reevaluacion: bool = False) -> dict:
     print(f"\n{'='*60}")
     print(f"SISTEMA DE EVALUACIÓN — CRÉDITO TERRA")
-    print(f"Banco Guayaquil - Área de Sostenibilidad")
+    print(f"Banco Guayaquil - Sostenibilidad")
     print(f"{'='*60}\n")
 
     # Paso 1: Leer ficha
@@ -47,11 +47,11 @@ def procesar_ficha(ruta_ficha: str, forzar_reevaluacion: bool = False) -> dict:
 
     if existe and not forzar_reevaluacion:
         print(f"\n⚠️  El caso {caso.get('id_caso')} ya existe en la base de datos.")
-        print("Si deseas re-evaluar, ejecuta con --reevaluar")
+        print("Si deseas reevaluar, ejecuta con --reevaluar")
         return {'error': True, 'motivo': 'duplicado', 'caso': caso}
 
     if existe:
-        print(f"ℹ️  Re-evaluando caso existente: {caso.get('id_caso')}")
+        print(f"ℹ️  Reevaluando caso existente: {caso.get('id_caso')}")
 
     # Paso 2: Validar
     print("\nPASO 2 — Validando datos...")
@@ -97,7 +97,7 @@ def procesar_ficha(ruta_ficha: str, forzar_reevaluacion: bool = False) -> dict:
     print("\nPASO 5 — Registrando en base de datos...")
     conn = crear_conexion(DB_PATH)
     es_reevaluacion = registrar_evaluacion(conn, caso, dictamen,
-                      motivo_reevaluacion="Re-evaluación manual" if forzar_reevaluacion else None)
+                      motivo_reevaluacion="Reevaluación manual" if forzar_reevaluacion else None)
     conn.close()
 
     accion = "actualizado" if es_reevaluacion else "registrado"

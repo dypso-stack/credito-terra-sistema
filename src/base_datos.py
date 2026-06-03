@@ -1,7 +1,7 @@
 """
 Módulo: Base de Datos SQLite
 Crédito Terra - Banco Guayaquil
-Gestión del portafolio: registros, re-evaluación, consultas
+Gestión del portafolio: registros, reevaluación, consultas
 """
 
 import sqlite3
@@ -102,7 +102,7 @@ def registrar_evaluacion(conn: sqlite3.Connection, caso: dict, dictamen: dict,
             SELECT id_caso, fecha_evaluacion, dictamen, n_criterios_cumplidos,
                    criterios_fallidos, ?
             FROM evaluaciones WHERE id_caso = ?
-        """, (motivo_reevaluacion or 'Re-evaluación', caso.get('id_caso')))
+        """, (motivo_reevaluacion or 'Reevaluación', caso.get('id_caso')))
 
         # Actualizar registro existente
         cursor.execute("""

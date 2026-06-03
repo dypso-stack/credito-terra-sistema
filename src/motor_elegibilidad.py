@@ -1,5 +1,5 @@
 """
-Módulo 2: Motor de elegibilidad
+Módulo: Motor de elegibilidad
 Crédito Terra - Banco Guayaquil
 Evalúa automáticamente los criterios de elegibilidad y emite dictamen justificado.
 """
