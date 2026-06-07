@@ -2,8 +2,37 @@
 Módulo: Modelo de Estimación Preliminar
 Crédito Terra - Banco Guayaquil
 
-Modelo ML que estima indicadores ambientales y probabilidad de elegibilidad
-para clientes interesados, antes del levantamiento formal de la ficha.
+QUÉ HACE ESTE MÓDULO
+--------------------
+Es el motor del Flujo 2 (estimación preliminar). Con unos pocos datos que el
+analista obtiene en una primera conversación, estima los indicadores
+ambientales y la PROBABILIDAD de que el proyecto sea elegible — antes de
+levantar la ficha formal. Lo usa la interfaz web (app.py).
+
+IMPORTANTE — QUÉ ES Y QUÉ NO ES
+-------------------------------
+El ML (Random Forest) es una DEMOSTRACIÓN METODOLÓGICA, no el mecanismo oficial
+de decisión (ese es el sistema experto de motor_elegibilidad). Aquí solo
+ORIENTA al analista. Por eso:
+- Requiere mínimo 200 casos para entrenar (Riley et al., 2019). Si no los hay,
+  la estimación cae a indicadores físicos y la parte de probabilidad se omite.
+- Re-entrenar cada 150 casos nuevos o si la precisión baja del 80%, SIEMPRE con
+  validación humana (nunca automático: sería incompatible con la auditabilidad).
+
+TRES MODELOS DENTRO DE UN MISMO .pkl
+------------------------------------
+- clasificador     : probabilidad de elegibilidad (Random Forest classifier).
+- regresor_gei     : GEI evitadas/año (Random Forest regressor).
+- regresor_cobertura: cobertura energética % (Random Forest regressor).
+
+CONTENIDO
+---------
+- SECTORES_RIESGO / ETAPAS_NUM / TIPOS_NUM / SEGMENTOS_NUM : codificación de
+  variables categóricas a números (el modelo no entiende texto).
+- preparar_features() : crea las columnas que consume el modelo.
+- entrenar_modelos()  : entrena y guarda los 3 modelos en disco (.pkl).
+- cargar_modelos()    : carga el .pkl entrenado.
+- estimar_proyecto()  : función que usa la web; calcula indicadores + predicción.
 
 Basado en: Riley et al. (2019) - mínimo 200 casos para primer entrenamiento.
 Re-entrenamiento: cada 150 casos nuevos o cuando precisión baje del 80%.
@@ -39,6 +68,10 @@ FEATURES_CLASIFICACION = [
     'ahorro_anual_usd',
 ]
 
+# --- Codificación de variables categóricas a número ---
+# El Random Forest no entiende texto, así que cada categoría se mapea a un entero.
+# SECTORES_RIESGO: nivel de riesgo socioambiental del sector (0 = menor, 3 = mayor).
+# Un sector más riesgoso tiende a fallar más criterios de exclusión (SARAS, IFC, etc.).
 SECTORES_RIESGO = {
     'INDUSTRIA ALIMENTICIA': 0,
     'AGROPECUARIO': 0,
@@ -78,18 +111,28 @@ SEGMENTOS_NUM = {
 
 
 def preparar_features(df: pd.DataFrame) -> pd.DataFrame:
-    """Prepara las variables para el modelo."""
+    """
+    Convierte un DataFrame crudo en las columnas numéricas que consume el modelo.
+
+    Hace dos cosas:
+    1. Codifica las categóricas (sector, etapa, tipo, segmento) a número usando
+       los diccionarios de mapeo de arriba. fillna() asigna un valor neutro si
+       aparece una categoría no listada, para que el modelo nunca reciba NaN.
+    2. Crea dos variables derivadas que aportan señal extra al modelo.
+
+    El "+1" en los denominadores es una guarda anti división por cero.
+    """
     df = df.copy()
 
-    # Codificar variables categóricas
+    # Codificar variables categóricas (texto -> entero, vía los mapas SECTORES_RIESGO, etc.)
     df['sector_riesgo'] = df['sector_bg'].map(SECTORES_RIESGO).fillna(1)
     df['etapa_num'] = df['etapa'].map(ETAPAS_NUM).fillna(1)
     df['tipo_num'] = df['tipo_sistema'].map(TIPOS_NUM).fillna(0)
     df['segmento_num'] = df['segmento'].map(SEGMENTOS_NUM).fillna(1)
 
-    # Variables derivadas
-    df['ratio_financiamiento'] = df['monto_credito_usd'] / (df['capex_usd'] + 1)
-    df['gei_por_kwp'] = df['gei_evitadas_anual_tco2'] / (df['capacidad_instalada_mwp'] * 1000 + 1)
+    # Variables derivadas (combinan campos para dar más señal al modelo)
+    df['ratio_financiamiento'] = df['monto_credito_usd'] / (df['capex_usd'] + 1)   # fracción del CAPEX cubierta por el crédito
+    df['gei_por_kwp'] = df['gei_evitadas_anual_tco2'] / (df['capacidad_instalada_mwp'] * 1000 + 1)  # eficiencia ambiental por kWp
 
     return df
 
@@ -111,14 +154,16 @@ def entrenar_modelos(db_path: str = "database/credito_terra.db") -> dict:
     df = pd.read_sql_query("SELECT * FROM evaluaciones", conn)
     conn.close()
 
+    # Umbral metodológico: por debajo de 200 casos no se entrena (Riley et al., 2019).
     if len(df) < 200:
         print(f"⚠️  Solo hay {len(df)} casos. Se necesitan al menos 200 para entrenar.")
         print("Los modelos de estimación no estarán disponibles hasta alcanzar ese umbral.")
         return None
 
     print(f"Entrenando modelos con {len(df)} casos...")
-    df = preparar_features(df)
+    df = preparar_features(df)   # crea las columnas codificadas y derivadas que usan los modelos
 
+    # Variables que ve el CLASIFICADOR de elegibilidad: técnicas + categóricas codificadas + derivadas.
     features_clf = [
         'capacidad_instalada_mwp', 'cobertura_energetica_pct',
         'capex_usd', 'monto_credito_usd', 'vida_util_anios',
@@ -127,11 +172,13 @@ def entrenar_modelos(db_path: str = "database/credito_terra.db") -> dict:
         'ratio_financiamiento', 'gei_por_kwp'
     ]
 
+    # Variables que ven los REGRESORES (GEI y cobertura): subconjunto técnico reducido.
     features_reg = [
         'capacidad_instalada_mwp', 'vida_util_anios',
         'consumo_cliente_mwh_anio', 'sector_riesgo', 'etapa_num'
     ]
 
+    # Descartar filas con datos faltantes en las columnas que necesitan los modelos (evita errores de entrenamiento).
     df_clean = df.dropna(subset=features_clf + ['cumple_elegibilidad',
                           'gei_evitadas_anual_tco2', 'cobertura_energetica_pct'])
 
@@ -144,10 +191,15 @@ def entrenar_modelos(db_path: str = "database/credito_terra.db") -> dict:
     X_reg_cob = df_clean[features_reg]
     y_cob = df_clean['cobertura_energetica_pct']
 
-    # Modelo clasificador — elegibilidad
+    # Modelo clasificador — elegibilidad (CUMPLE / NO CUMPLE).
+    #   n_estimators=100        -> número de árboles del bosque.
+    #   max_depth=8             -> profundidad máxima por árbol (limita el sobreajuste).
+    #   class_weight='balanced' -> compensa el desbalance del portafolio (~31% CUMPLE vs ~69% NO).
+    #   random_state=42         -> fija la semilla para que el resultado sea reproducible.
     clf = RandomForestClassifier(n_estimators=100, max_depth=8,
                                   random_state=42, class_weight='balanced')
     clf.fit(X_clf, y_clf)
+    # Validación cruzada de 5 particiones: estima la precisión sin depender de un único split.
     scores_clf = cross_val_score(clf, X_clf, y_clf, cv=5, scoring='accuracy')
 
     # Modelo regresor — GEI evitadas
@@ -224,19 +276,20 @@ def estimar_proyecto(
     """
     modelos = cargar_modelos()
 
-    # Calcular indicadores físicos directamente
-    irradiacion_promedio = 1400  # horas equivalentes Ecuador
+    # Cálculo de indicadores físicos (sin ML): fórmulas con parámetros típicos de Ecuador.
+    irradiacion_promedio = 1400  # horas equivalentes/año (factor de planta solar típico en Ecuador)
     energia_estimada = round(capacidad_mwp * irradiacion_promedio, 2)
     cobertura_estimada = round(energia_estimada / consumo_cliente_mwh * 100, 2) if consumo_cliente_mwh > 0 else 0
     gei_anual_estimado = round(energia_estimada * FACTOR_EMISION, 4)
-    vida_util_tipica = 25
+    vida_util_tipica = 25  # años de vida útil típica de un sistema fotovoltaico
     gei_total_estimado = round(gei_anual_estimado * vida_util_tipica, 4)
     cap_kwp = round(capacidad_mwp * 1000, 2)
-    capex_estimado = round(cap_kwp * 1000, 2)  # USD/kWp promedio Ecuador
-    tarifa_promedio = 0.10
+    capex_estimado = round(cap_kwp * 1000, 2)  # ~1000 USD/kWp, costo referencial promedio en Ecuador
+    tarifa_promedio = 0.10  # USD/kWh, tarifa eléctrica referencial
     ahorro_estimado = round(energia_estimada * 1000 * tarifa_promedio, 2)
 
-    # Predicción ML si modelos disponibles
+    # Predicción ML SOLO si el modelo ya está entrenado y disponible en disco.
+    # Si no, la estimación queda únicamente en los indicadores físicos de arriba.
     prob_elegible = None
     precision_modelo = None
 
@@ -261,12 +314,14 @@ def estimar_proyecto(
         features_clf = modelos['features_clf']
         features_disponibles = [f for f in features_clf if f in input_prep.columns]
 
+        # Solo predecir si están TODAS las variables que el modelo espera (si falta alguna, se omite).
         if len(features_disponibles) == len(features_clf):
+            # predict_proba devuelve [P(NO CUMPLE), P(CUMPLE)]; tomamos la segunda y la pasamos a %.
             prob = modelos['clasificador'].predict_proba(input_prep[features_clf])[0]
             prob_elegible = round(prob[1] * 100, 1)
             precision_modelo = modelos['metricas']['precision_elegibilidad']
 
-    # Recomendación
+    # Recomendación según la probabilidad estimada (umbrales: >=70% alto, >=40% medio, resto bajo).
     if prob_elegible is not None:
         if prob_elegible >= 70:
             recomendacion = "FAVORABLE — Proceder con levantamiento formal de ficha"

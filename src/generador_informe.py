@@ -2,8 +2,21 @@
 Módulo: Generador de Informe Word
 Crédito Terra - Banco Guayaquil
 
-Genera el informe técnico en formato Word (.docx) para cada evaluación,
-listo para presentar al Comité de Crédito.
+QUÉ HACE ESTE MÓDULO
+--------------------
+Es el PASO 4 del Flujo 1. Toma el `caso` y el `dictamen` ya producidos y arma
+el informe técnico en Word (.docx) que se presenta al Comité de Crédito: con
+encabezado corporativo, datos del cliente y del crédito, los indicadores
+ambientales recalculados, el detalle de los 10 criterios y el dictamen final
+(CUMPLE / NO CUMPLE).
+
+CONTENIDO
+---------
+- COLOR_*               : la paleta corporativa de Banco Guayaquil (magenta + apoyos).
+- agregar_titulo()      : inserta un encabezado con color y alineación.
+- agregar_parrafo()     : inserta un párrafo con formato (negrita, color, tamaño).
+- agregar_tabla_datos() : inserta una tabla con la cabecera sombreada en magenta.
+- generar_informe_word(): arma el documento completo, sección por sección, y lo guarda.
 """
 
 import sys
@@ -30,7 +43,12 @@ COLOR_GRIS = RGBColor(0x66, 0x66, 0x66) if DOCX_DISPONIBLE else None
 
 
 def agregar_titulo(doc, texto, nivel=1, color=None, centrado=False):
-    """Agrega un título con formato."""
+    """
+    Inserta un título (heading) en el documento y devuelve el párrafo creado.
+
+    nivel marca la jerarquía (1 = principal, 2 = subtítulo de sección);
+    color y centrado son opcionales.
+    """
     p = doc.add_heading(texto, level=nivel)
     if color:
         for run in p.runs:
@@ -41,7 +59,11 @@ def agregar_titulo(doc, texto, nivel=1, color=None, centrado=False):
 
 
 def agregar_parrafo(doc, texto, negrita=False, color=None, tamanio=10):
-    """Agrega un párrafo con formato."""
+    """
+    Inserta un párrafo de texto con formato configurable y lo devuelve.
+
+    Permite ajustar negrita, color y tamaño de fuente (en puntos).
+    """
     p = doc.add_paragraph()
     run = p.add_run(texto)
     run.bold = negrita

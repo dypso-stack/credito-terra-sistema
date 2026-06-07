@@ -2,11 +2,25 @@
 Interfaz Web — Estimador Preliminar Crédito Terra
 Banco Guayaquil
 
+QUÉ HACE ESTE SCRIPT
+--------------------
+Es la interfaz del Flujo 2 (estimación preliminar). Permite a analistas y
+clientes interesados obtener una estimación de indicadores ambientales y de
+viabilidad ANTES del levantamiento formal de la ficha. Toda la lógica de
+cálculo vive en modelo_estimacion.estimar_proyecto(); este archivo solo arma
+la pantalla y muestra los resultados.
+
+CÓMO SE EJECUTA (de arriba hacia abajo)
+---------------------------------------
+Streamlit re-corre el script completo en cada interacción:
+    1. Configura la página y los estilos CSS corporativos.
+    2. Muestra el estado del modelo ML (activo, o pendiente de 200 casos).
+    3. Pinta el formulario de 7 parámetros.
+    4. Al pulsar "Estimar proyecto", llama a estimar_proyecto() y despliega
+       indicadores, equivalencias y la recomendación de viabilidad.
+
 Uso:
     streamlit run src/app.py
-
-Permite a analistas y clientes interesados obtener una estimación
-de indicadores ambientales y viabilidad antes del levantamiento formal de la información.
 """
 
 import sys
@@ -23,7 +37,8 @@ st.set_page_config(
     layout="centered",
 )
 
-# Estilos
+# Estilos CSS corporativos. Las clases .resultado-alto / -medio / -bajo colorean
+# el recuadro del dictamen según el nivel de viabilidad (verde / amarillo / rojo).
 st.markdown("""
 <style>
     .main-header {
@@ -141,7 +156,8 @@ monto_aproximado = st.number_input(
 
 st.divider()
 
-# Botón de estimación
+# Botón de estimación. Todo lo que está dentro de este if solo se ejecuta cuando
+# el usuario pulsa el botón (Streamlit re-corre el script completo en cada clic).
 if st.button("🔍 Estimar proyecto", type="primary", use_container_width=True):
 
     with st.spinner("Calculando estimación..."):
@@ -217,6 +233,8 @@ if st.button("🔍 Estimar proyecto", type="primary", use_container_width=True):
     gei_total = resultado['gei_total_estimado_tco2']
     energia_anual = resultado['energia_estimada_mwh']
 
+    # Equivalencias divulgativas: 45 árboles ≈ 1 tCO₂ capturada al año;
+    # 1,2 MWh ≈ consumo eléctrico anual de un hogar promedio.
     col1, col2 = st.columns(2)
     with col1:
         st.info(f"🌳 **{int(gei_total * 45):,} árboles** plantados")
