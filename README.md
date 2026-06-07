@@ -21,6 +21,24 @@ pip install -r requirements.txt
 
 ---
 
+## Setup inicial
+
+Antes de usar el sistema por primera vez, genera la base de datos y entrena el modelo:
+
+```bash
+# 1. Ejecutar el notebook completo (Secciones A, B y C)
+#    Genera la BD con los casos simulados y entrena el modelo ML
+jupyter notebook notebooks/analisis_credito_terra.ipynb
+
+# 2. Copiar las fichas simuladas a la carpeta correspondiente
+#    data/simulated/fichas/
+```
+
+> La base de datos (`credito_terra.db`) y el modelo (`modelo_estimacion.pkl`)
+> se generan localmente y no están incluidos en el repositorio.
+
+---
+
 ## Estructura del proyecto
 
 ```
