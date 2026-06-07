@@ -23,19 +23,21 @@ pip install -r requirements.txt
 
 ## Setup inicial
 
-Antes de usar el sistema por primera vez, genera la base de datos y entrena el modelo:
+La base de datos y el modelo no se incluyen en el repositorio; se generan
+localmente la primera vez:
 
 ```bash
-# 1. Ejecutar el notebook completo (Secciones A, B y C)
-#    Genera la BD con los casos simulados y entrena el modelo ML
-jupyter notebook notebooks/analisis_credito_terra.ipynb
+# 1. Colocar las 200 fichas simuladas en data/simulated/fichas/
 
-# 2. Copiar las fichas simuladas a la carpeta correspondiente
-#    data/simulated/fichas/
+# 2. Poblar la base de datos procesándolas en lote (Flujo 1)
+python src/procesar_ficha.py --carpeta data/simulated/fichas/
+
+# 3. Entrenar el modelo ML y generar el .pkl (notebook, Sección B)
+jupyter notebook notebooks/analisis_credito_terra.ipynb
 ```
 
-> La base de datos (`credito_terra.db`) y el modelo (`modelo_estimacion.pkl`)
-> se generan localmente y no están incluidos en el repositorio.
+> La base de datos (`credito_terra.db`) se puebla en el paso 2 y el modelo
+> (`modelo_estimacion.pkl`) se genera en el paso 3. Ninguno está versionado en el repositorio.
 
 ---
 
@@ -44,22 +46,22 @@ jupyter notebook notebooks/analisis_credito_terra.ipynb
 ```
 credito_terra/
 ├── src/
-│   ├── lector_ficha.py          # Lee la ficha Excel del analista
-│   ├── validador.py             # Valida campos y detecta inconsistencias
-│   ├── motor_elegibilidad.py   # Evalúa 10 criterios y emite dictamen
-│   ├── generador_informe.py    # Genera informe Word por cliente
-│   ├── base_datos.py            # SQLite — registra y consulta
-│   ├── procesar_ficha.py        # Script operativo principal
-│   ├── modelo_estimacion.py    # Modelo ML de estimación preliminar
-│   └── app.py                   # Interfaz web Streamlit
+│   ├── lector_ficha.py          # Extrae campos de la ficha FLI CT-001
+│   ├── validador.py             # Verifica campos, rangos técnicos y consistencia financiera
+│   ├── motor_elegibilidad.py    # Evalúa los 10 criterios, recalcula indicadores y emite dictamen
+│   ├── generador_informe.py     # Genera el Informe de Evaluación de Elegibilidad (.docx)
+│   ├── base_datos.py            # SQLite: duplicados, historial y consultas de portafolio
+│   ├── procesar_ficha.py        # Orquesta el Flujo 1 (flags --reevaluar y --carpeta)
+│   ├── modelo_estimacion.py     # Random Forest: clasificador de elegibilidad + regresores de GEI y cobertura
+│   └── app.py                   # Interfaz Streamlit de estimación preliminar (Flujo 2)
 ├── data/
 │   ├── raw/                     # Ficha plantilla FLI CT-001
 │   ├── simulated/fichas/        # Fichas simuladas (pegar aquí las 200)
 │   └── outputs/                 # Informes y reportes generados
 ├── database/
-│   └── credito_terra.db         # Portafolio acumulado (pre-cargada)
+│   └── credito_terra.db         # Generada en el setup inicial (no incluida en repo)
 ├── models/
-│   └── modelo_estimacion.pkl    # Modelo ML entrenado
+│   └── modelo_estimacion.pkl    # Generado en el setup inicial (no incluido en repo)
 ├── notebooks/
 │   └── analisis_credito_terra.ipynb
 ├── requirements.txt
